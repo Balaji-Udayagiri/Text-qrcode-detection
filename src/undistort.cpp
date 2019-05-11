@@ -21,21 +21,16 @@ void imageCallback(const sensor_msgs::ImageConstPtr& img_msg)
   try
   {
     input_img = cv_bridge::toCvCopy(img_msg, "bgr8")->image;    
-    //cout<<"hey there"<<endl;
     float cameraMatrix[3][3]={423.776607, 0, 316.324559, 0, 423.936134, 269.224917, 0, 0, 1.0};
 	float distCoeffs[5]={-0.386858, 0.123377,-0.014007, -0.003243, 0};
 	Mat cm= Mat(3,3,CV_32FC1,cameraMatrix);
 	Mat dist= Mat(1,5,CV_32FC1,distCoeffs);
 	
 	undistort(input_img,imgpro,cm,dist,cm);
-	
-    imshow("win3",imgpro);
-    waitKey(5);
   }
   catch (cv_bridge::Exception& e)
   {
     ROS_ERROR("Could not convert from '%s' to 'bgr8'.", img_msg->encoding.c_str());
-    //cout<<"NO way"<<endl;
   }
 }
 
@@ -50,13 +45,11 @@ int main(int argc, char **argv)
 
 	int counter = 0;
 	ros::Rate loop_rate(500);
-    	while (nh.ok()) {
+    while (nh.ok()) {
 		counter++;
-    		ros::spinOnce(); 
+    	ros::spinOnce(); 
 	
-	//imshow("win", imgpro);
-	//waitKey(1);	
-	std_msgs::Header header;
+		std_msgs::Header header;
         header.seq = counter; 
         header.stamp = ros::Time::now(); 
         img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, imgpro);
