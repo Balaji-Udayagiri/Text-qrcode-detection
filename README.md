@@ -1,4 +1,5 @@
 # Text-qrcode-detection
+Package name: barcode
 
 Packages used:
 
@@ -30,14 +31,7 @@ sensor_msgs::Image
 
 
 To Run:
-
-rosrun package_name feed
-
-rosrun package_name undistort_node
-
-rosrun package_name barcode_node
-
-rosrun package_name tess_node
+roslaunch barcode qrtext.launch 
 
 
 References:
