@@ -15,7 +15,7 @@
 #include <opencv2/opencv.hpp>
 #include "zbar.h"
 #include "barcode/qrdata.h"
-
+#include <fstream>
 using namespace std;
 using namespace cv;
 using namespace zbar;
@@ -24,9 +24,17 @@ cv::Mat im;
 cv_bridge::CvImage img_bridge;
 sensor_msgs::Image img_msg;
 string outText;
+int qr_data_is_incoming=0;
+ofstream MyExcelFile;
+string qr_data;
+string comma = ",";
+
+
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
+  if(!qr_data_is_incoming)
+	return;
   try
   {
     im = cv_bridge::toCvShare(msg, "bgr8")->image.clone();
@@ -46,8 +54,20 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	ocr->SetImage(im.data, im.cols, im.rows, 3, im.step);
  
     // Run Tesseract OCR on image
+
     outText = string(ocr->GetUTF8Text());
- ROS_INFO("Data: [%s]", outText.c_str());
+	ROS_INFO("text detected: [%s]", outText.c_str());
+	if(strlen(outText.c_str())>0)
+		{
+		outText.erase(std::remove(outText.begin(),outText.end(),' '),outText.end());
+		string cc = qr_data+","+outText+","+" ";
+		
+		cc.erase(std::remove(cc.begin(),cc.end(),'\n'),cc.end());
+		
+		if(strlen(cc.c_str() )>( strlen(qr_data.c_str() )+4)  )
+		MyExcelFile <<cc<< endl;
+		}
+	
   }
   catch (cv_bridge::Exception& e)
   {
@@ -57,7 +77,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
 void QRdataCallback(const barcode::qrdata::ConstPtr& msg1)
 {
-  ROS_INFO("Data: [%s]", msg1->data.data.c_str());
+  ROS_INFO("Qr data detected: [%s]", msg1->data.data.c_str());
+
+  if(strlen(msg1->data.data.c_str())>0)
+  {
+	qr_data_is_incoming=1;
+
+ 	qr_data=msg1->data.data.c_str();
+  }
 }
 
 int main(int argc, char **argv) {
@@ -65,10 +92,17 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "textprep");
 	ros::NodeHandle nh;
 	image_transport::ImageTransport it(nh);
-	image_transport::Subscriber sub = it.subscribe("/code/image", 1, imageCallback);
-	ros::Subscriber data_sub = nh.subscribe("/code/data",1,QRdataCallback);
 	
+	MyExcelFile.open("/home/balaji/inventory.csv");
+	MyExcelFile << "QR-code data, AlphaNumeric Code, Shelf Code" << endl;
+	
+	image_transport::Subscriber sub = it.subscribe("/code/image", 1, imageCallback);
+
+	
+	ros::Subscriber data_sub = nh.subscribe("/code/data",1,QRdataCallback);
+
 	ros::spin();
+	MyExcelFile.close();
 	return 0;
 }
 		
