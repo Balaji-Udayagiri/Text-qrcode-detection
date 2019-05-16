@@ -7,6 +7,7 @@
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <string>
 
 using namespace std;
 using namespace cv;
@@ -15,7 +16,7 @@ using namespace cv;
 cv::Mat input_img, imgpro;
 cv_bridge::CvImage img_bridge;
 sensor_msgs::Image msg;
-
+int flag=0;
 void imageCallback(const sensor_msgs::ImageConstPtr& img_msg)
 {
   try
@@ -27,6 +28,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& img_msg)
 	Mat dist= Mat(1,5,CV_32FC1,distCoeffs);
 	
 	undistort(input_img,imgpro,cm,dist,cm);
+	//string name = "/home/debjoy/pic_folder/pic" + to_string(flag) + ".jpg";
+	//imwrite(name, imgpro);
+	flag++;
   }
   catch (cv_bridge::Exception& e)
   {

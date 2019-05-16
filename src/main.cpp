@@ -15,6 +15,7 @@ using namespace std;
 using namespace cv;
 using namespace zbar;
 
+int ylow;
 cv::Mat frame;
 cv_bridge::CvImage img_bridge;
 sensor_msgs::Image img_msg;
@@ -103,11 +104,29 @@ int main(int argc, char **argv) {
 			P.points.push_back(t1);				
 		}
 	msg.Poly = P;
+	ylow = P.points[0].y;
+	for(int j=0; j<4; j++)
+	{
+		if(P.points[j].y>ylow)
+			ylow=P.points[j].y;
+	}
 	msg.data = qr_msg;
 	//pos_pub.publish(P);
 	data_pub.publish(msg);
         }
 	
+	//Cropping
+	
+	Mat im1(frame.rows-ylow, frame.cols,CV_8UC3,Scalar(0,0,0));
+	for(int i=ylow;i<frame.rows;i++)
+	{
+		for(int j=0;j<frame.cols;j++)
+		{
+			for(int k=0;k<3;k++)
+				im1.at<Vec3b>(i-ylow,j)[k]=frame.at<Vec3b>(i,j)[k];
+		}
+	}
+
         std_msgs::Header header;
         header.seq = counter; 
         header.stamp = ros::Time::now(); 
@@ -116,7 +135,7 @@ int main(int argc, char **argv) {
 
         pub.publish(img_msg);
         image.set_data(NULL, 0);
-	imshow("win", frame);
+	imshow("win", im1);
 	waitKey(1);
     }
 
