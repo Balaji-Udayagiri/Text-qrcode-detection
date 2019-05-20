@@ -37,6 +37,7 @@ add_executable(barcode_node src/main.cpp)
 add_executable(feed src/Imgpub.cpp)
 add_executable(tess_node src/textprep.cpp)
 add_executable(undistort_node src/undistort.cpp)
+add_executable(final src/final.cpp)
 
 target_link_libraries(tess_node tesseract ${catkin_LIBRARIES} ${OpenCV_LIBS} ${TESSERACT_LIBRARIES} ${LEPTONICA_LIBRARIES})
 add_dependencies(tess_node barcode_generate_messages_cpp)
@@ -50,6 +51,8 @@ add_dependencies(barcode_node barcode_generate_messages_cpp)
 target_link_libraries(feed ${catkin_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(feed barcode_generate_messages_cpp)
 
+target_link_libraries(final ${catkin_LIBRARIES})
+add_dependencies(final barcode_generate_messages_cpp)
 
 
 

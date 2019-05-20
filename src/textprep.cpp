@@ -16,11 +16,12 @@
 #include "zbar.h"
 #include "barcode/qrdata.h"
 #include <fstream>
+#include <bits/stdc++.h> 
 using namespace std;
 using namespace cv;
 using namespace zbar;
 
-cv::Mat im;
+cv::Mat im, framebw;
 cv_bridge::CvImage img_bridge;
 sensor_msgs::Image img_msg;
 string outText;
@@ -28,7 +29,6 @@ int qr_data_is_incoming=0;
 ofstream MyExcelFile;
 string qr_data;
 string comma = ",";
-
 
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -39,11 +39,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
     im = cv_bridge::toCvShare(msg, "bgr8")->image.clone();
 	
-     tesseract::TessBaseAPI *ocr = new tesseract::TessBaseAPI();
+	auto numOfConfigs = 1;
+	auto **configs    = new char* [numOfConfigs];
+	configs[0] = (char *) "bazaar.config";
+
+    tesseract::TessBaseAPI *ocr = new tesseract::TessBaseAPI();
      
     // Initialize tesseract to use English (eng) and the LSTM OCR engine. 
-    ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY);
- 	
+    //ocr->Init(NULL, "eng", tesseract::OEM_DEFAULT, configs, numOfConfigs, nullptr, nullptr, false);
+ 	ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY);
  	ocr->SetVariable("tessedit_char_whitelist","qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789");
     // Set Page segmentation mode to PSM_AUTO (3)
     ocr->SetPageSegMode(tesseract::PSM_AUTO);
@@ -67,6 +71,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		if(strlen(cc.c_str() )>( strlen(qr_data.c_str() )+4)  )
 		MyExcelFile <<cc<< endl;
 		}
+	ocr->End();
 	
   }
   catch (cv_bridge::Exception& e)
@@ -82,7 +87,6 @@ void QRdataCallback(const barcode::qrdata::ConstPtr& msg1)
   if(strlen(msg1->data.data.c_str())>0)
   {
 	qr_data_is_incoming=1;
-
  	qr_data=msg1->data.data.c_str();
   }
 }
@@ -93,14 +97,15 @@ int main(int argc, char **argv) {
 	ros::NodeHandle nh;
 	image_transport::ImageTransport it(nh);
 	
-	MyExcelFile.open("/home/balaji/inventory.csv");
+	MyExcelFile.open("/home/debjoy/inventory.csv");
 	MyExcelFile << "QR-code data, AlphaNumeric Code, Shelf Code" << endl;
 	
 	image_transport::Subscriber sub = it.subscribe("/code/image", 1, imageCallback);
 
 	
 	ros::Subscriber data_sub = nh.subscribe("/code/data",1,QRdataCallback);
-
+	
+	
 	ros::spin();
 	MyExcelFile.close();
 	return 0;
