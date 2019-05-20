@@ -7,9 +7,8 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include "std_msgs/String.h"
-#include "geometry_msgs/Polygon.h"
-#include "geometry_msgs/Point32.h"
-#include "barcode/qrdata.h"
+
+
 
 using namespace std;
 using namespace cv;
@@ -29,7 +28,6 @@ int main(int argc, char **argv) {
 	image_transport::Publisher pub = it.advertise("/usb_cam/image_raw", 1);
 	while(1)
 	{
-		
 		counter++;
 		Video >> frame;
 		std_msgs::Header header;
@@ -37,8 +35,8 @@ int main(int argc, char **argv) {
 	        header.stamp = ros::Time::now(); 
 	        img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, frame);
 	        img_bridge.toImageMsg(img_msg); 
-        	pub.publish(img_msg);
-		
+        	ros::spinOnce();
+		pub.publish(img_msg);
 		
 	}
 	return 0;
