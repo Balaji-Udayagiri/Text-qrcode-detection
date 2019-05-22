@@ -23,17 +23,16 @@ using namespace zbar;
 
 cv::Mat im, framebw;
 cv_bridge::CvImage img_bridge;
-sensor_msgs::Image img_msg;
+sensor_msgs::Image img_msg, dummy_msg;
 string outText;
 int qr_data_is_incoming=0;
 ofstream MyExcelFile;
 string qr_data;
 string comma = ",";
 
-
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
-  if(!qr_data_is_incoming)
+  if(qr_data_is_incoming=0)
 	return;
   try
   {
@@ -46,11 +45,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     tesseract::TessBaseAPI *ocr = new tesseract::TessBaseAPI();
      
     // Initialize tesseract to use English (eng) and the LSTM OCR engine. 
-    //ocr->Init(NULL, "eng", tesseract::OEM_DEFAULT, configs, numOfConfigs, nullptr, nullptr, false);
- 	ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY);
+    ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY, configs, numOfConfigs, nullptr, nullptr, false);
+ 	//ocr->Init(NULL, "eng", tesseract::OEM_LSTM_ONLY);
+
  	ocr->SetVariable("tessedit_char_whitelist","qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789");
-    // Set Page segmentation mode to PSM_AUTO (3)
-    ocr->SetPageSegMode(tesseract::PSM_AUTO);
+    
+	// Set Page segmentation mode to PSM_AUTO (3)
+    ocr->SetPageSegMode(tesseract::PSM_SINGLE_WORD);
+	//ocr->SetPageSegMode(tesseract::PSM_AUTO);
  
     // Open input image using OpenCV
     
@@ -71,8 +73,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		if(strlen(cc.c_str() )>( strlen(qr_data.c_str() )+4)  )
 		MyExcelFile <<cc<< endl;
 		}
-	ocr->End();
-	
+	ocr->End();	
   }
   catch (cv_bridge::Exception& e)
   {
@@ -82,11 +83,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
 void QRdataCallback(const barcode::qrdata::ConstPtr& msg1)
 {
+  qr_data_is_incoming = 0;
   ROS_INFO("Qr data detected: [%s]", msg1->data.data.c_str());
-
   if(strlen(msg1->data.data.c_str())>0)
   {
 	qr_data_is_incoming=1;
+	ROS_INFO("in func");
  	qr_data=msg1->data.data.c_str();
   }
 }
@@ -100,12 +102,9 @@ int main(int argc, char **argv) {
 	MyExcelFile.open("/home/debjoy/inventory.csv");
 	MyExcelFile << "QR-code data, AlphaNumeric Code, Shelf Code" << endl;
 	
+	ros::Subscriber data_sub = nh.subscribe("/code/data",1,QRdataCallback);
 	image_transport::Subscriber sub = it.subscribe("/code/image", 1, imageCallback);
 
-	
-	ros::Subscriber data_sub = nh.subscribe("/code/data",1,QRdataCallback);
-	
-	
 	ros::spin();
 	MyExcelFile.close();
 	return 0;

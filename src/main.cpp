@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
 	//ros::Publisher qr_pub = nh.advertise<std_msgs::String>("/code/qr", 10);
 	//ros::Publisher pos_pub = nh.advertise<geometry_msgs::Polygon>("/code/bound", 4);
         //ros::Publisher bar_pub = nh.advertise<std_msgs::String>("/code/bar", 10);
-	ros::Publisher data_pub = nh.advertise<barcode::qrdata>("/code/data",10);
+	ros::Publisher data_pub = nh.advertise<barcode::qrdata>("/code/data",1);
 	
     // Create a zbar reader
     ImageScanner scanner;
@@ -126,16 +126,16 @@ int main(int argc, char **argv) {
 				im1.at<Vec3b>(i-ylow,j)[k]=frame.at<Vec3b>(i,j)[k];
 		}
 	}
-
+	
         std_msgs::Header header;
         header.seq = counter; 
         header.stamp = ros::Time::now(); 
-        img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, frame);
+        img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, im1);
         img_bridge.toImageMsg(img_msg); 
 
         pub.publish(img_msg);
         image.set_data(NULL, 0);
-	imshow("win", im1);
+	imshow("win", frame);
 	waitKey(1);
     }
 
