@@ -117,15 +117,84 @@ int main(int argc, char **argv) {
 	
 	//Cropping
 	
-	Mat im1(frame.rows-ylow, frame.cols,CV_8UC3,Scalar(0,0,0));
+	Mat img(frame.rows-ylow, frame.cols,CV_8UC3,Scalar(0,0,0));
 	for(int i=ylow;i<frame.rows;i++)
 	{
 		for(int j=0;j<frame.cols;j++)
 		{
 			for(int k=0;k<3;k++)
-				im1.at<Vec3b>(i-ylow,j)[k]=frame.at<Vec3b>(i,j)[k];
+				img.at<Vec3b>(i-ylow,j)[k]=frame.at<Vec3b>(i,j)[k];
 		}
 	}
+
+	Mat  dilated_blue, dilated_green, dilated_red, blur_blue, blur_green, blur_red, normblue, normgreen, normred;
+
+	Mat im1(img.rows,img.cols,CV_8UC3,Scalar(0,0,0));
+	Mat img_blur(img.rows,img.cols,CV_8UC3,Scalar(0,0,0));
+	Mat img_dilate(img.rows,img.cols,CV_8UC3,Scalar(0,0,0));
+	Mat img_norm(img.rows,img.cols,CV_8UC3,Scalar(0,0,0));
+	Mat imgdiff(img.rows,img.cols,CV_8UC3,Scalar(0,0,0));
+
+	Mat img_blue(img.rows,img.cols,CV_8UC1,Scalar(0));
+	Mat img_green(img.rows,img.cols,CV_8UC1,Scalar(0));
+	Mat img_red(img.rows,img.cols,CV_8UC1,Scalar(0));
+
+	int unity[7][7];
+	for(int i=0;i<7;i++)
+	for(int j=0;j<7;j++)
+	unity[i][j]=1;
+
+
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			img_blue.at<uchar>(i,j)=img.at<Vec3b>(i,j)[0];
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			img_green.at<uchar>(i,j)=img.at<Vec3b>(i,j)[1];
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			img_red.at<uchar>(i,j)=img.at<Vec3b>(i,j)[2];
+
+	
+
+
+	dilate(img_blue,dilated_blue,Mat(7,7,CV_32FC1,unity),Point(-1,-1),1,BORDER_CONSTANT,morphologyDefaultBorderValue());
+	dilate(img_green,dilated_green,Mat(7,7,CV_32FC1,unity),Point(-1,-1),1,BORDER_CONSTANT,morphologyDefaultBorderValue());
+	dilate(img_red,dilated_red,Mat(7,7,CV_32FC1,unity),Point(-1,-1),1,BORDER_CONSTANT,morphologyDefaultBorderValue());
+
+
+	medianBlur(dilated_blue,blur_blue,21);
+	medianBlur(dilated_green,blur_green,21);
+	medianBlur(dilated_red,blur_red,21);
+
+	Mat diffblue(img.rows,img.cols,CV_8UC1,Scalar(0));
+	Mat diffgreen(img.rows,img.cols,CV_8UC1,Scalar(0));
+	Mat diffred(img.rows,img.cols,CV_8UC1,Scalar(0));
+
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			diffblue.at<uchar>(i,j)=255-abs(blur_blue.at<uchar>(i,j)-img.at<Vec3b>(i,j)[0]);
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			diffgreen.at<uchar>(i,j)=255-abs(blur_green.at<uchar>(i,j)-img.at<Vec3b>(i,j)[1]);
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			diffred.at<uchar>(i,j)=255-abs(blur_red.at<uchar>(i,j)-img.at<Vec3b>(i,j)[2]);
+
+	normalize(diffblue, normblue, 0, 255, NORM_MINMAX, CV_8UC1);
+	normalize(diffgreen, normgreen, 0, 255, NORM_MINMAX, CV_8UC1);
+	normalize(diffred, normred, 0, 255, NORM_MINMAX, CV_8UC1);
+
+
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			im1.at<Vec3b>(i,j)[0]=normblue.at<uchar>(i,j);
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			im1.at<Vec3b>(i,j)[1]=normgreen.at<uchar>(i,j);
+	for(int i=0;i<img.rows;i++)
+		for(int j=0;j<img.cols;j++) 
+			im1.at<Vec3b>(i,j)[2]=normred.at<uchar>(i,j);
 	
         std_msgs::Header header;
         header.seq = counter; 
@@ -135,7 +204,7 @@ int main(int argc, char **argv) {
 
         pub.publish(img_msg);
         image.set_data(NULL, 0);
-	imshow("win", frame);
+	imshow("win", im1);
 	waitKey(1);
     }
 

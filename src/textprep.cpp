@@ -21,7 +21,7 @@ using namespace std;
 using namespace cv;
 using namespace zbar;
 
-cv::Mat im, framebw;
+cv::Mat im;
 cv_bridge::CvImage img_bridge;
 sensor_msgs::Image img_msg, dummy_msg;
 string outText;
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 	ros::NodeHandle nh;
 	image_transport::ImageTransport it(nh);
 	
-	MyExcelFile.open("/home/debjoy/inventory.csv");
+	MyExcelFile.open("/home/balaji/inventory.csv");
 	MyExcelFile << "QR-code data, AlphaNumeric Code, Shelf Code" << endl;
 	
 	ros::Subscriber data_sub = nh.subscribe("/code/data",1,QRdataCallback);
