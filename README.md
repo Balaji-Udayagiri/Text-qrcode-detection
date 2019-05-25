@@ -23,7 +23,11 @@ Ros Nodes:
 
 4.Node:tess_node - executable:textprep.cpp
 
-  Subscribes to ROS-topics /code/image and /code/data and prints any alphanumeric text and/or qr-code information (for now). To further develop.
+  Subscribes to ROS-topics /code/image and /code/data and prints any alphanumeric text and/or qr-code information. It writes the QR-code and corresponding alphanumeric code into a csv file /home/inventory.csv. Added appropriate psm, Added custom word-lists and patterns. 
+  
+5.Node:final - executable:final.cpp
+
+  Opens inventory.csv file created by tess_node and for each QR-code, selects the best alphanumeric <int><int><char> code. Writes them in /home/inventory_rev.csv. (TO EDIT IF OTHER FORMAT ALPHANUMERIC CODE IS TO BE DETECTED)
 
 msg type used:
 qrdata.msg
@@ -32,7 +36,9 @@ sensor_msgs::Image
 
 To Run:
 roslaunch barcode qrtext.launch 
+rosrun barcode final
 
+(EDIT file locations /home/your_pc_name first)
 
 References:
  for msg of type sensor_msgs::Image ----
@@ -40,6 +46,8 @@ References:
 
 for make file of tesseract ---- 
 https://stackoverflow.com/questions/38128260/cmake-and-tesseract-how-to-link-using-cmake?fbclid=IwAR3-wI5U-YVLXltUM0lDAtnVXMRqkxGh2l94o8BPXgBjYTASn0UBBZxiKk4
+
+https://github.com/tesseract-ocr/tesseract/wiki/ImproveQuality#page-segmentation-method
 
 and
 
