@@ -51,8 +51,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
  	ocr->SetVariable("tessedit_char_whitelist","qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789");
     
 	// Set Page segmentation mode to PSM_AUTO (3)
-    ocr->SetPageSegMode(tesseract::PSM_SINGLE_WORD);
-	//ocr->SetPageSegMode(tesseract::PSM_AUTO);
+   // ocr->SetPageSegMode(tesseract::PSM_SINGLE_WORD);
+	ocr->SetPageSegMode(tesseract::PSM_AUTO);
  
     // Open input image using OpenCV
     
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 	ros::NodeHandle nh;
 	image_transport::ImageTransport it(nh);
 	
-	MyExcelFile.open("/home/balaji/inventory.csv");
+	MyExcelFile.open("/home/ark/qdata/inventory.csv");
 	MyExcelFile << "QR-code data, AlphaNumeric Code, Shelf Code" << endl;
 	
 	ros::Subscriber data_sub = nh.subscribe("/code/data",1,QRdataCallback);
