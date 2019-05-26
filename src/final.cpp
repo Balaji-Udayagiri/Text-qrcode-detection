@@ -9,20 +9,22 @@ using namespace std;
 int main()
 {
 	
-	ofstream MyExcelFile("/home/debjoy/inventory_rev.csv");	
+	ofstream MyExcelFile("/home/ark/qdata/inventory_rev.csv");	
 	MyExcelFile << "QR-code data, AlphaNumeric Code, Shelf Code" << endl;
 
-	ifstream read("/home/debjoy/inventory.csv");
-	string input, QR=" ", QRprev = " ", str[10][100], QR_list[10];
+	ifstream read("/home/ark/qdata/inventory.csv");
+	string input, QR="", QRprev = "", str[10][200], QR_list[10];
 	int m=0, n=0;
 	string line;
 	while (std::getline(read, line)) // read whole line into line
 	{	
+		cout<<line<<endl;
 		QRprev = QR;
 		QR_list[n] = QR;
     	std::istringstream iss(line); // string stream
    		std::getline(iss, QR, ','); // read first part up to comma, ignore the comma
-		if((QR!=QRprev)&&(m>1))
+		cout<<QRprev<<" "<<QR<<endl;
+		if((QR!=QRprev)&&(m>1)&&(QR!=""))
 		{
 			n++;
 			m=0;
@@ -59,9 +61,10 @@ int main()
 	        //cout<<itr->first<<" "<<itr->second<<endl;
 	        if (itr->second == ma)
 	        {
-	            cout<<"Substring: "<<itr->first<<" count: "<<itr->second<<endl;
+				if(QR_list[k]!=""){
+				cout<<"Substring: "<<itr->first<<" count: "<<itr->second<<endl;
 				string cc = QR_list[k]+","+itr->first+","+" ";
-				MyExcelFile <<cc<< endl;
+				MyExcelFile <<cc<< endl;}
 	        }
    	 	}
 	

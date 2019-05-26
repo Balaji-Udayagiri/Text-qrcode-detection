@@ -1,6 +1,6 @@
 <launch>
 
-	<node pkg="barcode" type="feed" name="feed"/>
+	<!--<node pkg="barcode" type="feed" name="feed"/>-->
 	<node pkg="barcode" type="undistort_node" name="undistort_node"/>
 	<node pkg="barcode" type="barcode_node" name="barcode_node" output = "screen"/>
 	<node pkg="barcode" type="tess_node" name="tess_node" output = "screen"/>

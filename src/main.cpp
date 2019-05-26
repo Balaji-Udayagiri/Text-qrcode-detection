@@ -15,7 +15,7 @@ using namespace std;
 using namespace cv;
 using namespace zbar;
 
-int ylow;
+int ylow,xright,xleft,xcentre;
 cv::Mat frame;
 cv_bridge::CvImage img_bridge;
 sensor_msgs::Image img_msg;
@@ -110,22 +110,52 @@ int main(int argc, char **argv) {
 		if(P.points[j].y>ylow)
 			ylow=P.points[j].y;
 	}
+	xright = P.points[0].x;
+	xleft = P.points[0].x;
+	for(int i=0; i<4; i++)
+	{
+		if(P.points[i].x>xright)
+			xright=P.points[i].x;
+		if(P.points[i].x<xleft)
+			xleft=P.points[i].x;
+	}
+	
+	xcentre=(xright+xleft)/2;
 	msg.data = qr_msg;
 	//pos_pub.publish(P);
 	data_pub.publish(msg);
         }
 	
-	//Cropping
+	//Side cropping
+	Mat cropped_frame(frame.rows, frame.cols/2,CV_8UC3,Scalar(0,0,0));
+	for(int i=0;i<frame.rows;i++)
+		for(int j=0 ; j<frame.cols/2 ; j++)
+			{
+				cropped_frame.at<Vec3b>(i,j)=frame.at<Vec3b>(i,xcentre/2+j);
+			}
+		
+	Mat resized_frame;	
+	resize(cropped_frame,resized_frame,Size(cropped_frame.cols*2,cropped_frame.rows*2));
+
 	
-	Mat img(frame.rows-ylow, frame.cols,CV_8UC3,Scalar(0,0,0));
+
+
+
+
+	//Cropping
+	/*
+	Mat img2(frame.rows-ylow, frame.cols,CV_8UC3,Scalar(0,0,0));
 	for(int i=ylow;i<frame.rows;i++)
 	{
 		for(int j=0;j<frame.cols;j++)
 		{
 			for(int k=0;k<3;k++)
-				img.at<Vec3b>(i-ylow,j)[k]=frame.at<Vec3b>(i,j)[k];
+				img2.at<Vec3b>(i-ylow,j)[k]=frame.at<Vec3b>(i,j)[k];
 		}
 	}
+	Mat img2 = frame;
+	Mat img(2*img2.rows,2*img2.cols,CV_8UC3,Scalar(0,0,0));
+	resize(img2,img,Size(2*img2.cols,2*img2.rows));
 
 	Mat  dilated_blue, dilated_green, dilated_red, blur_blue, blur_green, blur_red, normblue, normgreen, normred;
 
@@ -194,17 +224,22 @@ int main(int argc, char **argv) {
 			im1.at<Vec3b>(i,j)[1]=normgreen.at<uchar>(i,j);
 	for(int i=0;i<img.rows;i++)
 		for(int j=0;j<img.cols;j++) 
-			im1.at<Vec3b>(i,j)[2]=normred.at<uchar>(i,j);
+			im1.at<Vec3b>(i,j)[2]=normred.at<uchar>(i,j); */
 	
-        std_msgs::Header header;
+
+
+	std_msgs::Header header;
         header.seq = counter; 
         header.stamp = ros::Time::now(); 
-        img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, im1);
+        img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, resized_frame);
         img_bridge.toImageMsg(img_msg); 
+
+
+	
 
         pub.publish(img_msg);
         image.set_data(NULL, 0);
-	imshow("win", im1);
+	imshow("win", resized_frame);
 	waitKey(1);
     }
 
