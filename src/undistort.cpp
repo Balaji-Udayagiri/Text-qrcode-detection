@@ -32,6 +32,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& img_msg)
 	Mat dist= Mat(1,5,CV_32FC1,distCoeffs);
 	
 	undistort(input_img,imgpro,cm,dist,cm);
+	
 	//string name = "/home/debjoy/pic_folder/pic" + to_string(flag) + ".jpg";
 	//imwrite(name, imgpro);
 	flag++;

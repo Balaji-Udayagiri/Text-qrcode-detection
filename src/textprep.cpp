@@ -61,7 +61,24 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
  
     // Run Tesseract OCR on image
 
-    outText = string(ocr->GetUTF8Text());
+	ocr->Recognize(0);
+  	tesseract::ResultIterator* ri = ocr->GetIterator();
+  	tesseract::PageIteratorLevel level = tesseract::RIL_WORD;
+  	if (ri != 0) {
+    	do {
+    	  const char* word = ri->GetUTF8Text(level);
+    	  float conf = ri->Confidence(level);
+    	  
+    	  int x1, y1, x2, y2;
+    	  cout<<"\n"<<word<<"\n";
+    	  ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+    	  printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d; width: %d; height: %d\n",word, conf, x1, y1, x2, y2, abs(x2-x1), abs(y2-y1));
+    	  rectangle( im, Point( x1, y1 ), Point( x2, y2 ), Scalar( 0, 0, 255 ), +1, 4 );
+    	  
+    	  delete[] word;
+    	} while (ri->Next(level));
+  	}
+	outText = string(ocr->GetUTF8Text());
 	ROS_INFO("text detected: [%s]", outText.c_str());
 	if(strlen(outText.c_str())>0)
 		{
