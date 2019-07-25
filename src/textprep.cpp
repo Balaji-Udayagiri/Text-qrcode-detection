@@ -29,7 +29,7 @@ int qr_data_is_incoming=0;
 ofstream MyExcelFile;
 string qr_data;
 string comma = ",";
-
+int conf;
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
   if(qr_data_is_incoming=0)
@@ -74,11 +74,13 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     	  ri->BoundingBox(level, &x1, &y1, &x2, &y2);
     	  printf("word: '%s';  \tconf: %.2f; BoundingBox: %d,%d,%d,%d; width: %d; height: %d\n",word, conf, x1, y1, x2, y2, abs(x2-x1), abs(y2-y1));
     	  rectangle( im, Point( x1, y1 ), Point( x2, y2 ), Scalar( 0, 0, 255 ), +1, 4 );
-    	  
+    	  if(conf>80 && word!=" ")
+    	  	outText = string(word);
+    	  	//outText = string(ocr->GetUTF8Text());
     	  delete[] word;
     	} while (ri->Next(level));
   	}
-	outText = string(ocr->GetUTF8Text());
+  	
 	ROS_INFO("text detected: [%s]", outText.c_str());
 	if(strlen(outText.c_str())>0)
 		{
