@@ -1,6 +1,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include<opencv2/opencv.hpp>
 #include "zbar.h"
 #include <iostream>
 #include <iomanip>
@@ -16,9 +17,10 @@ using namespace cv;
 using namespace zbar;
 
 int ylow,xright,xleft,xcentre;
-cv::Mat frame;
+cv::Mat frame, perp_frame;
 cv_bridge::CvImage img_bridge;
 sensor_msgs::Image img_msg;
+
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -124,7 +126,40 @@ int main(int argc, char **argv) {
 	msg.data = qr_msg;
 	//pos_pub.publish(P);
 	data_pub.publish(msg);
-        }
+	//perp_frame = frame;
+
+	/*//////////////////////////////////////////////PERSPECTIVE TRANSFORM//////////////////////////////
+	
+    Point2f inputQuad[4]; 
+	Point2f outputQuad[4];
+	         
+    // Lambda Matrix
+    Mat lambda( 2, 4, CV_32FC1 );
+     
+    // Set the lambda matrix the same type and size as input
+    lambda = Mat::zeros(frame.rows, frame.cols, frame.type() );
+ 
+    // The 4 points that select quadilateral on the input , from top-left in clockwise order
+    // These four pts are the sides of the rect box used as input 
+    inputQuad[0] = Point2f(P.points[0].x, P.points[0].y);
+    inputQuad[1] = Point2f(P.points[1].x, P.points[1].y);
+    inputQuad[2] = Point2f(P.points[2].x, P.points[2].y);
+    inputQuad[3] = Point2f(P.points[3].x, P.points[3].y);  
+    // The 4 points where the mapping is to be done , from top-left in clockwise order
+    outputQuad[0] = Point2f(P.points[0].x, P.points[0].y);
+    outputQuad[1] = Point2f(P.points[2].x, P.points[0].y);
+    outputQuad[2] = Point2f(P.points[2].x, P.points[2].y);
+    outputQuad[3] = Point2f(P.points[0].x, P.points[2].y);
+ 
+    //Get the Perspective Transform Matrix i.e. lambda 
+    lambda = getPerspectiveTransform( inputQuad, outputQuad );
+    //Apply the Perspective Transform just found to the src image
+    warpPerspective(frame, perp_frame ,lambda, frame.size() ); 
+*/
+	
+	//////////////////////////////////////////////////////////////////////////////////////////
+
+    }
 	
 	//Side cropping
 	Mat cropped_frame(frame.rows, frame.cols/2,CV_8UC3,Scalar(0,0,0));
@@ -134,14 +169,41 @@ int main(int argc, char **argv) {
 				cropped_frame.at<Vec3b>(i,j)=frame.at<Vec3b>(i,xcentre/2+j);
 			}
 		
-	Mat resized_frame;	
-	resize(cropped_frame,resized_frame,Size(cropped_frame.cols*2,cropped_frame.rows*2));
-
+	Mat resized_frame,gray_frame,binary_frame,doubled_frame;
 	
 
+	//////////////////////////////////////////////////////RESIZE on depth//////////////////
+	float fx=537.292878, fy=527.000348, cx=427.331854, cy=240.226888;
+	//   Camera Matrix = [ fx 0 cx ]
+	//					[ 0 fy cy ]
+	//					[ 0 0  1 ] 
 
+	float depth = 1200;  //(in mm)
+	float f;                      //focal length (in mm)
+	//float m = (fx+fy)/(2*f);      //(px/mm)
+	//float QRwidth, QRheight;      //(px)
+	//float QRw1 = QRwidth/m, QRh1 = QRheight/m;       //(mm)
+	//float real_QR_w = (depth*QRw1)/f;
+	//float real_QR_h = (depth*QRh1)/f;
+	
+	float real_text_w = 143;
+	float real_text_h = 61;
+	float favg = (fx+fy)/2;
+	float text_w = (real_text_w*favg)/depth;    //(in px)
+	float text_h = (real_text_h*favg)/depth;
+	
+	float optimal_text_w = 172, optimal_text_h =74;
+	float k = optimal_text_h/text_h;
+	int  rows = cropped_frame.rows * k;
+	int cols = cropped_frame.cols * k;
+	resize(cropped_frame,resized_frame,Size(cols, rows));             
+	
+	
+	//cvtColor(cropped_frame,gray_frame ,CV_BGR2GRAY);
+	//threshold(gray_frame,binary_frame, 50, 255, THRESH_TOZERO);
 
-
+	//threshold(gray_frame,binary_frame, 150, maxValue, THRESH_TOZERO_INV);	
+	
 	//Cropping
 	/*
 	Mat img2(frame.rows-ylow, frame.cols,CV_8UC3,Scalar(0,0,0));
@@ -225,22 +287,24 @@ int main(int argc, char **argv) {
 	for(int i=0;i<img.rows;i++)
 		for(int j=0;j<img.cols;j++) 
 			im1.at<Vec3b>(i,j)[2]=normred.at<uchar>(i,j); */
-	
+
 
 
 	std_msgs::Header header;
-        header.seq = counter; 
-        header.stamp = ros::Time::now(); 
-        img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, resized_frame);
-        img_bridge.toImageMsg(img_msg); 
+    header.seq = counter; 
+    header.stamp = ros::Time::now(); 
+    img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, resized_frame);
+    img_bridge.toImageMsg(img_msg); 
 
 
 	
 
-        pub.publish(img_msg);
-        image.set_data(NULL, 0);
+    pub.publish(img_msg);
+    image.set_data(NULL, 0);
+	namedWindow("win",1);
 	imshow("win", resized_frame);
 	waitKey(1);
+
     }
 
     return 0;
